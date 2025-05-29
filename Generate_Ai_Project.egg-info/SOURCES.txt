@@ -1,0 +1,12 @@
+LICENSE_OFL.txt
+README
+setup.py
+Generate_Ai_Project.egg-info/PKG-INFO
+Generate_Ai_Project.egg-info/SOURCES.txt
+Generate_Ai_Project.egg-info/dependency_links.txt
+Generate_Ai_Project.egg-info/top_level.txt
+src/__init__.py
+src/custom_knowledge.py
+src/helper.py
+src/prompt.py
+src/update_vector.py
