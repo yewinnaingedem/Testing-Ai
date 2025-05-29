@@ -10,7 +10,7 @@ from io import BytesIO
 import os 
 from dotenv import load_dotenv 
 import json
-import openai
+from openai import OpenAI
 import qrcode
 import base64
 token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl9jaGlsZF9hY2NvdW50X2lkIjpudWxsLCJzdWIiOjU5MCwiaXNzIjoiaHR0cDovLzE4OC4xNjYuMjMxLjAvYXBpL21vYmlsZS92MS9hdXRoZW50aWNhdGUiLCJpYXQiOjE3NDgyNjIxNzgsImV4cCI6MTc0ODc4MDU3OCwibmJmIjoxNzQ4MjYyMTc4LCJqdGkiOiJrVDZsQmRvODJ2MHk3eGpvIn0.Is1dPNkkfus0AhPDTiw_Deft3HTNqmr9w2d9IgXi2GA"
@@ -45,7 +45,7 @@ OPENAI_API_KEY=os.environ.get('OPENAI_API_KEY')
 
 #stroing to the python evirement 
 os.environ["GROQ_API_KEY"] = GROQ_API_KEY
-openai.api_key =  OPENAI_API_KEY
+client = OpenAI(api_key = OPENAI_API_KEY ) 
 
 systemPrompt = (
     "You are an assistant for the bus service. "
@@ -177,7 +177,7 @@ function_descriptions = [
 ]
 
 def analyze_input (input , selectedSeat , uniqueId , selectedSeatNo )  : 
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
             model="gpt-4-turbo",
             messages=[
                 {

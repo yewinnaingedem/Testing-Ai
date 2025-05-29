@@ -21,6 +21,9 @@ $(document).ready(() => {
         let selectedSeatId = $("input[name='selectedSeatId']").val()
         let selectedSeatNo = $("input[name='selectedSeatNo']").val()
         let perviousInput = $("input[name='perviousInput']").val()
+        let travelDate = $("input[name='travelDate']").val()
+        let boardingPoint = $("input[name='boardingPoint']").val()
+        let droppingPoint = $("input[name='droppingPoint']").val()
         $('.material-icons').addClass('d-none');
         $('.spinner-border').removeClass('d-none');
         if (input) {
@@ -34,7 +37,7 @@ $(document).ready(() => {
                 url: 'http://localhost:8080/get',
                 method: 'post',
                 contentType: "application/json", 
-                data: JSON.stringify({ msg: input  , initState  , avaliable_seats : getAvaliableSeats() , uniqueId , selectedSeatId , selectedSeatNo , perviousInput}),
+                data: JSON.stringify({ msg: input  , initState  , avaliable_seats : getAvaliableSeats() , uniqueId , selectedSeatId , selectedSeatNo , perviousInput , travelDate , boardingPoint , droppingPoint}),
                 success: (res) => {
                     generateInterFace(res.answer , 'receiver' , formatTime())
                     if( res.info ) generateInterFace(res.info , 'receiver' , formatTime())
@@ -43,6 +46,7 @@ $(document).ready(() => {
                     $("input[name='selectedSeatId']").val(res.selectedSeatId)
                     $("input[name='selectedSeatNo']").val(res.selectedSeatNo)
                     $("input[name='perviousInput']").val(res.perviousInput)
+                    $("input[name='travelDate']").val(res.travelDate)
                     $('.spinner-border').addClass('d-none');
                     $('.material-icons').
                     removeClass('d-none');

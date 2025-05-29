@@ -124,6 +124,9 @@ def chat():
     selectedSeatNo =  request.form.get("selectedSeatNo") or request.json.get("selectedSeatNo") or request.args.get("selectedSeatNo") 
     selectedSeatId =  request.form.get("selectedSeatId") or request.json.get("selectedSeatId") or request.args.get("selectedSeatId") 
     perviousInput =  request.form.get("perviousInput") or request.json.get("perviousInput") or request.args.get("perviousInput") 
+    travel_date =  request.form.get("travelDate") or request.json.get("travelDate") or request.args.get("travelDate") 
+    boarding_point =  request.form.get("boardingPoint") or request.json.get("boardingPoint") or request.args.get("boardingPoint") 
+    dropping_point =  request.form.get("droppingPoint") or request.json.get("droppingPoint") or request.args.get("droppingPoint") 
     
     if not input:
         return jsonify({"error": "No message received"}), 400
@@ -132,7 +135,7 @@ def chat():
         perviousInput = ""
 
     input = perviousInput + "." + input
-
+    
 
     if  initState == 2:
         prompt = ChatPromptTemplate.from_messages(
@@ -172,7 +175,7 @@ def chat():
             response['info'] = ""
     elif  initState ==  3 :
         response = {}
-        response['answer'] , value  , key , initState = response_selected(input , avaliableSeats , uniqueId )
+        response['answer'] , value  , key , initState = response_selected(input , avaliableSeats , uniqueId , boarding_point , dropping_point )
         selectedSeatId = value 
         selectedSeatNo = key 
         response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer']) 
@@ -193,7 +196,7 @@ def chat():
         #         {"role": "user", "content": input}
         #     ]
         # )
-        # input = response['choices'][0]['message']['content'] 
+        # input = response['choices'][0]['message']['content']  
         input = GoogleTranslator(source='auto', target='en').translate(input)
         print(input)
         prompt = ChatPromptTemplate.from_messages(
@@ -217,6 +220,9 @@ def chat():
         response['info'] = ""
         retrieved_docs = retriver.get_relevant_documents(input)
         data = [doc.metadata.get('unique_id', '') for doc in retrieved_docs]
+        travel_date = [doc.metadata.get('travel_date', '') for doc in retrieved_docs]
+        boarding_point = [doc.metadata.get('boarding_point', '') for doc in retrieved_docs]
+        dropping_point = [doc.metadata.get('dropping_point', '') for doc in retrieved_docs]
         uniqueId = data[0] 
         selectedSeatNo = ""
         selectedSeatId = ""
@@ -229,7 +235,10 @@ def chat():
             "selectedSeatId": selectedSeatId,
             "info":  response['info'],
             "uniqueId": uniqueId  ,
-            "perviousInput" : perviousInput 
+            "perviousInput" : perviousInput ,
+            "travelDate" : travel_date , 
+            "boardingPoint" : boarding_point , 
+            "droppingPoint" : dropping_point , 
         })
     else:
         return jsonify({"error": "No answer found"}), 500

@@ -76,13 +76,13 @@ prompt = ChatPromptTemplate.from_messages(
 
 questionAnswerChain = create_stuff_documents_chain(llm, prompt)
 
-def get_dynamic_seat_data(available_seats = []):
+def get_dynamic_seat_data(boarding_point, dropping_point, available_seats = []):
     if available_seats is None:
         available_seats = []
     return {
         "seat_avaliable": ", ".join(available_seats),
-        "dropping_point" : "ချမ်းမြရွှေပြည်နားဘတ်စ်ကား (MDY)" , 
-        "boarding_point" : "အောင်မင်္ဂလာဘတ်စ်ဂါး, အဝေးပြေးလမ်းဂိတ်တံခါး, အမှတ် 3 မထယ်သာ (YGN)" ,
+        "dropping_point" : f"{dropping_point}" , 
+        "boarding_point" : f"{dropping_point}" ,
         "seat_policy": "Seats can be held for up to 15 minutes. Bookings can be managed from the History page within 30 days."
     }
 
@@ -114,7 +114,7 @@ def get_seat_id_from_input(user_input, seat_map):
     return result 
 
 
-def response_selected (input , available_seats ,  unique) :
+def response_selected (input , available_seats ,  unique , boarding_point , dropping_point) :
     result = get_seat_id_from_input(input, available_seats)
     if result:  # checks if dict is not empty
         key = list(result.keys())[0]
@@ -127,13 +127,13 @@ def response_selected (input , available_seats ,  unique) :
             "selectedSeats": value,
         }
         response = requests.post(url, headers=headers , json=payload)
-        seat_data = get_dynamic_seat_data(available_seats)
+        seat_data = get_dynamic_seat_data(boarding_point , dropping_point , available_seats  )
         retriever = CustomDataRetriever(custom_data=seat_data)
         rag_chain = create_retrieval_chain(retriever, questionAnswerChain)
         response = rag_chain.invoke({"input": input})
         return response["answer"] , value , key , 4
     else :
-        seat_data = get_dynamic_seat_data(available_seats)
+        seat_data = get_dynamic_seat_data(boarding_point , dropping_point , available_seats  )
         retriever = CustomDataRetriever(custom_data=seat_data)
         rag_chain = create_retrieval_chain(retriever, questionAnswerChain)
         response = rag_chain.invoke({"input": input})
