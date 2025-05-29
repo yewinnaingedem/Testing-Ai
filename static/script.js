@@ -20,6 +20,7 @@ $(document).ready(() => {
         let uniqueId = $("input[name='uniqueId']").val()
         let selectedSeatId = $("input[name='selectedSeatId']").val()
         let selectedSeatNo = $("input[name='selectedSeatNo']").val()
+        let perviousInput = $("input[name='perviousInput']").val()
         $('.material-icons').addClass('d-none');
         $('.spinner-border').removeClass('d-none');
         if (input) {
@@ -28,11 +29,12 @@ $(document).ready(() => {
             $("input[name='message']").val('');
             $("input[name='selectedSeatNo]").val('') ;
             $("input[name='selectedSeatId]").val('') ;
+            // $("input[name='perviousInput]").val('') ;
             $.ajax({
                 url: 'http://localhost:8080/get',
                 method: 'post',
                 contentType: "application/json", 
-                data: JSON.stringify({ msg: input  , initState  , avaliable_seats : getAvaliableSeats() , uniqueId , selectedSeatId , selectedSeatNo}),
+                data: JSON.stringify({ msg: input  , initState  , avaliable_seats : getAvaliableSeats() , uniqueId , selectedSeatId , selectedSeatNo , perviousInput}),
                 success: (res) => {
                     generateInterFace(res.answer , 'receiver' , formatTime())
                     if( res.info ) generateInterFace(res.info , 'receiver' , formatTime())
@@ -40,6 +42,7 @@ $(document).ready(() => {
                     $("input[name='uniqueId']").val(res.uniqueId)
                     $("input[name='selectedSeatId']").val(res.selectedSeatId)
                     $("input[name='selectedSeatNo']").val(res.selectedSeatNo)
+                    $("input[name='perviousInput']").val(res.perviousInput)
                     $('.spinner-border').addClass('d-none');
                     $('.material-icons').
                     removeClass('d-none');

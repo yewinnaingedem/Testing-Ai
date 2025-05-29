@@ -1,3 +1,7 @@
+import torch
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 from flask import Flask ,render_template , jsonify , request 
 import requests
 from deep_translator import GoogleTranslator
@@ -12,25 +16,19 @@ from src.custom_knowledge import response_selected
 # from langchain.embeddings import OpenAIEmbeddings
 from src.predictions.confimation import analyze_input
 from dateutil import parser 
-# from src.function_calling_api.get_avaliable_seat import customDataRetrieval
+from src.predictions.get_avaliable_seat import customDataRetrieval
 from src.helper import downloadHuggingFaceEmbedding
-import openai 
+# import openai 
 from langchain_core.retrievers import BaseRetriever
 from typing import List
-from sentence_transformers import CrossEncoder
 from datetime import datetime, timedelta
 import re
-
-
-        
-
 import os 
 
 app = Flask(__name__) 
 
 load_dotenv() 
 
-#storing the env variable 
 index_name = os.environ.get("VECTOR_INDEX") 
 PINECONE_API_KEY= os.environ.get('PINECONE_API')
 GROQ_API_KEY=os.environ.get('GROQ_API_KEY')
@@ -40,12 +38,8 @@ OPENAI_APi_KEY=os.environ.get('OPENAI_API_KEY')
 #stroing to the python evirement 
 os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
-openai.api_key =  OPENAI_APi_KEY
+# openai.api_key =  OPENAI_APi_KEY
 
-
-
-
-# Initialize the LLM
 llm = ChatGroq(
     model= MODEL_NAME,
     temperature=0.0,
@@ -61,8 +55,6 @@ docsearch  = PineconeVectorStore.from_existing_index(
 )
 
 retriver = docsearch.as_retriever(search_type="similarity" , search_kwargs={'k' : 1 }) 
-
-reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
 
 
 def replace_relative_or_absolute_date(sentence, base_date=None):
@@ -86,7 +78,6 @@ def replace_relative_or_absolute_date(sentence, base_date=None):
     replaced = False
     travel_date = None
 
-    # 1. Check relative date keywords
     for keyword in sorted_keywords:
         pattern = r'\b' + re.escape(keyword) + r'\b'
         match = re.search(pattern, sentence, flags=re.IGNORECASE)
@@ -96,7 +87,7 @@ def replace_relative_or_absolute_date(sentence, base_date=None):
             replacement_text = f"travel date is {travel_date}"
             sentence = re.sub(pattern, replacement_text, sentence, flags=re.IGNORECASE)
             replaced = True
-            return sentence, True  # Return early if found
+            return sentence, True  
     try:
         date_patterns = re.findall(r'\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}[/-]\d{1,2}[/-]\d{1,2}|[A-Za-z]{3,9} \d{1,2},? \d{4})\b', sentence)
         for date_str in date_patterns:
@@ -115,7 +106,6 @@ def replace_relative_or_absolute_date(sentence, base_date=None):
     return sentence,  replaced
 
 def build_contextual_input(chat_history, current_input, max_turns=3):
-    # Use the last few turns from chat history
     recent_history = chat_history[-max_turns * 2:]  # human + ai
     history_text = "\n".join([f"{role}: {msg}" for role, msg in recent_history])
     return f"{history_text}\nHuman: {current_input}"
@@ -138,9 +128,12 @@ def chat():
     if not input:
         return jsonify({"error": "No message received"}), 400
     
-    # input = GoogleTranslator(source='auto', target='en').translate(input)
+    if perviousInput is None:
+        perviousInput = ""
 
-    # response['uniqueId'] = uniqueId
+    input = perviousInput + "." + input
+
+
     if  initState == 2:
         prompt = ChatPromptTemplate.from_messages(
                 [
@@ -190,29 +183,29 @@ def chat():
         response['intiState'] =  1
         response['uniqueId'] = uniqueId
     else : 
-        response = openai.ChatCompletion.create(
-            model="gpt-4",  # or "gpt-3.5-turbo"
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a helpful assistant that receives user travel information in the Myanmar language. Your only task is to translate the input into clear, natural English. Do not change the meaning or add extra information. Just translate."
-                } ,
-                {"role": "user", "content": input}
-            ]
-        )
-        input = response['choices'][0]['message']['content'] 
+        # response = openai.ChatCompletion.create(
+        #     model="gpt-4", 
+        #     messages=[
+        #         {
+        #             "role": "system",
+        #             "content": "You are a helpful assistant that receives user travel information in the Myanmar language. Your only task is to translate the input into clear, natural English. Do not change the meaning or add extra information. Just translate."
+        #         } ,
+        #         {"role": "user", "content": input}
+        #     ]
+        # )
+        # input = response['choices'][0]['message']['content'] 
+        input = GoogleTranslator(source='auto', target='en').translate(input)
         print(input)
         prompt = ChatPromptTemplate.from_messages(
                     [
                         ("system", systemPrompt),
-                        # *chat_history ,
                         ("human", "{input}")
                     ]
                 )
         questionAnswerChain = create_stuff_documents_chain(llm, prompt)
         ragChain = create_retrieval_chain(retriver, questionAnswerChain)
         input , did_replace = replace_relative_or_absolute_date(input)
-        response = ragChain.invoke({"input": perviousInput + "." + input }) 
+        response = ragChain.invoke({"input": input }) 
         context_docs = response["context"]
         response['init_state'] = 2 if did_replace else 1
         print(context_docs)
@@ -225,9 +218,9 @@ def chat():
         retrieved_docs = retriver.get_relevant_documents(input)
         data = [doc.metadata.get('unique_id', '') for doc in retrieved_docs]
         uniqueId = data[0] 
-        selectedSeatNo = "A1"
-        selectedSeatId = "1_1"
-    perviousInput = input
+        selectedSeatNo = ""
+        selectedSeatId = ""
+        perviousInput = input
     if 'answer' in response:
         return jsonify({
             "answer": response['answer'],
@@ -235,7 +228,8 @@ def chat():
             "selectedSeatNo": selectedSeatNo,
             "selectedSeatId": selectedSeatId,
             "info":  response['info'],
-            "uniqueId": uniqueId  
+            "uniqueId": uniqueId  ,
+            "perviousInput" : perviousInput 
         })
     else:
         return jsonify({"error": "No answer found"}), 500

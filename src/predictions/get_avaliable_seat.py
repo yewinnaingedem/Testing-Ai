@@ -41,7 +41,7 @@ class CustomDataRetrieverForSeatPlan(BaseRetriever):
         super().__init__(**kwargs)
         self.custom_data = custom_data or {
             "seat_info": (
-                "http://localhost:8000/bus/seat_plan/226/149665?departure_date=04-04-2025&adult=1&is_foreigner=false&type=bus&passenger_type=male"
+                "http://188.166.231.0/bus/seat_plan/226/149665?departure_date=04-04-2025&adult=1&is_foreigner=false&type=bus&passenger_type=male"
             )
         }
 
@@ -56,7 +56,7 @@ def customDataRetrieval(data) -> CustomDataRetrieverForSeatPlan:
     
     custom_data = {
         "seat_info": (
-            f"http://localhost:8000/bus/seat_plan/{data}?departure_date=04-04-2025&adult=1&is_foreigner=false&type=bus&passenger_type=male"
+            f"http://188.166.231.0/bus/seat_plan/{data}?departure_date=04-04-2025&adult=1&is_foreigner=false&type=bus&passenger_type=male"
         )
     }
     

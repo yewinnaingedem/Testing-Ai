@@ -1,4 +1,5 @@
-from langchain_community.embeddings import HuggingFaceEmbeddings
+# from langchain_community.embeddings import HuggingFaceEmbeddings 
+from langchain_openai import OpenAIEmbeddings
 from langchain.document_loaders import PyPDFLoader , DirectoryLoader 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
@@ -18,6 +19,7 @@ dbHost = os.environ.get('DB_HOST')
 dbUser = os.environ.get('DB_USER')
 dbName = os.environ.get('DB_NAME')
 dbPassword = os.environ.get('DB_PASSWORD')
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
 
 def load_pdf_loader (data) : 
@@ -32,8 +34,9 @@ def text_splite (extractedData) :
     return text_chunk 
 
 def downloadHuggingFaceEmbedding():
-    embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    return embedding
+    # embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-large" , api_key=OPENAI_API_KEY)
+    return embeddings
 
 
 
@@ -89,48 +92,3 @@ def is_user_selected_seat(user_message):
     buy_keywords = ["A1", "A2", "A3", "E1"]
     return any(keyword.lower() in user_message.lower() for keyword in buy_keywords)
 import re
-
-
-def extract_customer_info(message):
-    # Regex patterns
-    phone_pattern = r'\b(09\d{7,9})\b'  # Myanmar phone number (09XXXXXXXXX)
-    email_pattern = r'[a-z0-9A-Z_]*@[a-z0-9A-Z]*\.[a-zA-z]'
-
-    # Extract phone number
-    phone_match = re.search(phone_pattern, message)
-    phone = phone_match.group() if phone_match else None
-
-    # Extract email
-    email_match = re.search(email_pattern, message)
-    email = email_match.group() if email_match else None
-
-    # Remove detected phone and email from message
-    clean_message = message
-    if phone:
-        clean_message = clean_message.replace(phone, "").strip()
-    if email:
-        clean_message = clean_message.replace(email, "").strip()
-
-    # Assume remaining text is the name
-    name = clean_message if clean_message else None
-    return f"your name is {name} , phone number is {phone} and your email {email}"
-    # return {
-    #     "name": name,
-    #     "phone": phone,
-    #     "email": email
-    # }
-
-myanmar_tomorrow_words = ["နက်ဖြန်" , "tomorrow" , "မနက်ဖြန်"]
-
-# def update_input (input) :
-#     updated_tokens = []
-#     today = datetime.now()
-#     tokens = pds.tokenize(input)
-#     for token in tokens:
-#         if token in myanmar_tomorrow_words:
-#             date_str = (today + timedelta(days=1)).strftime("%-d-%-m-%Y")
-#             updated_tokens.append(date_str)
-#         else:
-#             updated_tokens.append(token)
-    
-#     return " ".join(updated_tokens)
