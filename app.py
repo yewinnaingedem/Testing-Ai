@@ -227,8 +227,6 @@ def chat():
         travel_date = [doc.metadata.get('travel_date', '') for doc in retrieved_docs]
         boarding_point = [doc.metadata.get('boarding_point', '') for doc in retrieved_docs][0]
         dropping_point = [doc.metadata.get('dropping_point', '') for doc in retrieved_docs][0]
-        print('-----')
-        print(dropping_point , boarding_point)
         uniqueId = data[0] 
         selectedSeatNo = ""
         selectedSeatId = ""
