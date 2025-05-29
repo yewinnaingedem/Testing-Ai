@@ -47,6 +47,8 @@ $(document).ready(() => {
                     $("input[name='selectedSeatNo']").val(res.selectedSeatNo)
                     $("input[name='perviousInput']").val(res.perviousInput)
                     $("input[name='travelDate']").val(res.travelDate)
+                    $("input[name='boardingPoint']").val(res.boardingPoint)
+                    $("input[name='droppingPoint']").val(res.droppingPoint)
                     $('.spinner-border').addClass('d-none');
                     $('.material-icons').
                     removeClass('d-none');
@@ -65,7 +67,7 @@ $(document).ready(() => {
                 <label for="">${time}</label>
                 <div class="msg-block">
                     <p>
-                        <pre>${message}</pre>
+                        <pre style="white-space: pre-wrap; word-break: break-all;">${message}</pre>
                     </p>
                 </div>
             </div>

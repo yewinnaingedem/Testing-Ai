@@ -55,7 +55,7 @@ systemPrompt = (
     "If the customer changes their selection to an available seat, proceed with booking. "
     "If the selected seat is available, ask the customer for the following details: "
     "Provide the dropping and boarding proint that is important"
-    "'name', 'email', 'dropping location',  'phone number' , dropping point , boarding point .\n\n"
+    "'name', 'email', 'nrc  no (National Registration Card)',  'phone number' , dropping point , boarding point .\n\n"
     "{context}"
 )
 
@@ -116,7 +116,7 @@ def get_seat_id_from_input(user_input, seat_map):
 
 def response_selected (input , available_seats ,  unique , boarding_point , dropping_point) :
     result = get_seat_id_from_input(input, available_seats)
-    if result:  # checks if dict is not empty
+    if result:  
         key = list(result.keys())[0]
         value = result[key]
         seatId = unique.split('/')[1]
@@ -127,6 +127,7 @@ def response_selected (input , available_seats ,  unique , boarding_point , drop
             "selectedSeats": value,
         }
         response = requests.post(url, headers=headers , json=payload)
+        print(response.json())
         seat_data = get_dynamic_seat_data(boarding_point , dropping_point , available_seats  )
         retriever = CustomDataRetriever(custom_data=seat_data)
         rag_chain = create_retrieval_chain(retriever, questionAnswerChain)

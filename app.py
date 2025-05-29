@@ -18,7 +18,8 @@ from src.predictions.confimation import analyze_input
 from dateutil import parser 
 from src.predictions.get_avaliable_seat import customDataRetrieval
 from src.helper import downloadHuggingFaceEmbedding
-# import openai 
+import openai
+
 from langchain_core.retrievers import BaseRetriever
 from typing import List
 from datetime import datetime, timedelta
@@ -33,12 +34,14 @@ index_name = os.environ.get("VECTOR_INDEX")
 PINECONE_API_KEY= os.environ.get('PINECONE_API')
 GROQ_API_KEY=os.environ.get('GROQ_API_KEY')
 MODEL_NAME=os.environ.get('MODEL_NAME')
-OPENAI_APi_KEY=os.environ.get('OPENAI_API_KEY')
+OPENAI_API_KEY=os.environ.get('OPENAI_API_KEY')
 
 #stroing to the python evirement 
 os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
-# openai.api_key =  OPENAI_APi_KEY
+# openai.api_key=OPENAI_API_KEY
+
+openai.OpenAI(api_key=OPENAI_API_KEY)
 
 llm = ChatGroq(
     model= MODEL_NAME,
@@ -145,7 +148,7 @@ def chat():
                 ]
             )
         questionAnswerChain = create_stuff_documents_chain(llm, prompt)
-        custom_retriever = customDataRetrieval(uniqueId)
+        custom_retriever = customDataRetrieval(uniqueId , travel_date)
         ragChain = create_retrieval_chain(custom_retriever, questionAnswerChain)
         response = ragChain.invoke({"input": input})
         match = re.search(r'http[s]?://[^\s]+', response['answer'])
@@ -155,7 +158,7 @@ def chat():
             data = rawData.json() 
             response['answer'] = data['seat_plan']
             response['init_state'] = 3 
-            response['info'] = """You can hold a seat for only **5 minutes**. The seat plan is updated **live every minute** to reflect real-time availability.
+            response['info'] = """You can hold a seat for only **15 minutes**. The seat plan is updated **live every minute** to reflect real-time availability.
             if you want to selected the seat just type the seat number you can only selected one seat at this movement
             """
             response['info'] = GoogleTranslator(source='auto', target='my').translate(response['info'])
@@ -183,21 +186,22 @@ def chat():
         response['info'] = ""            
     elif  initState ==  4 :
         response = analyze_input(input , selectedSeatId , uniqueId , selectedSeatNo)
+        response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer']) 
         response['intiState'] =  1
         response['uniqueId'] = uniqueId
     else : 
-        # response = openai.ChatCompletion.create(
-        #     model="gpt-4", 
-        #     messages=[
-        #         {
-        #             "role": "system",
-        #             "content": "You are a helpful assistant that receives user travel information in the Myanmar language. Your only task is to translate the input into clear, natural English. Do not change the meaning or add extra information. Just translate."
-        #         } ,
-        #         {"role": "user", "content": input}
-        #     ]
-        # )
-        # input = response['choices'][0]['message']['content']  
-        input = GoogleTranslator(source='auto', target='en').translate(input)
+        response = openai.chat.completions.create( 
+            model="gpt-4", 
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant that receives user travel information in the Myanmar language. Your only task is to translate the input into clear, natural English. Do not change the meaning or add extra information. Just translate."
+                } ,
+                {"role": "user", "content": input}
+            ]
+        )
+        input = response.choices[0].message.content  
+        # input = GoogleTranslator(source='auto', target='en').translate(input)
         print(input)
         prompt = ChatPromptTemplate.from_messages(
                     [
@@ -221,8 +225,10 @@ def chat():
         retrieved_docs = retriver.get_relevant_documents(input)
         data = [doc.metadata.get('unique_id', '') for doc in retrieved_docs]
         travel_date = [doc.metadata.get('travel_date', '') for doc in retrieved_docs]
-        boarding_point = [doc.metadata.get('boarding_point', '') for doc in retrieved_docs]
-        dropping_point = [doc.metadata.get('dropping_point', '') for doc in retrieved_docs]
+        boarding_point = [doc.metadata.get('boarding_point', '') for doc in retrieved_docs][0]
+        dropping_point = [doc.metadata.get('dropping_point', '') for doc in retrieved_docs][0]
+        print('-----')
+        print(dropping_point , boarding_point)
         uniqueId = data[0] 
         selectedSeatNo = ""
         selectedSeatId = ""
@@ -238,7 +244,7 @@ def chat():
             "perviousInput" : perviousInput ,
             "travelDate" : travel_date , 
             "boardingPoint" : boarding_point , 
-            "droppingPoint" : dropping_point , 
+            "droppingPoint" : dropping_point, 
         })
     else:
         return jsonify({"error": "No answer found"}), 500

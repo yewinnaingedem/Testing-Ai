@@ -52,11 +52,11 @@ class CustomDataRetrieverForSeatPlan(BaseRetriever):
         ]
 
 
-def customDataRetrieval(data) -> CustomDataRetrieverForSeatPlan:
+def customDataRetrieval(data , travel_date)  -> CustomDataRetrieverForSeatPlan:
     
     custom_data = {
         "seat_info": (
-            f"http://188.166.231.0/bus/seat_plan/{data}?departure_date=04-04-2025&adult=1&is_foreigner=false&type=bus&passenger_type=male"
+            f"http://188.166.231.0/bus/seat_plan/{data}?departure_date={travel_date}&adult=1&is_foreigner=false&type=bus&passenger_type=male"
         )
     }
     

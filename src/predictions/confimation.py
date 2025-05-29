@@ -10,7 +10,7 @@ from io import BytesIO
 import os 
 from dotenv import load_dotenv 
 import json
-from openai import OpenAI
+import openai
 import qrcode
 import base64
 token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl9jaGlsZF9hY2NvdW50X2lkIjpudWxsLCJzdWIiOjU5MCwiaXNzIjoiaHR0cDovLzE4OC4xNjYuMjMxLjAvYXBpL21vYmlsZS92MS9hdXRoZW50aWNhdGUiLCJpYXQiOjE3NDgyNjIxNzgsImV4cCI6MTc0ODc4MDU3OCwibmJmIjoxNzQ4MjYyMTc4LCJqdGkiOiJrVDZsQmRvODJ2MHk3eGpvIn0.Is1dPNkkfus0AhPDTiw_Deft3HTNqmr9w2d9IgXi2GA"
@@ -45,7 +45,7 @@ OPENAI_API_KEY=os.environ.get('OPENAI_API_KEY')
 
 #stroing to the python evirement 
 os.environ["GROQ_API_KEY"] = GROQ_API_KEY
-client = OpenAI(api_key = OPENAI_API_KEY ) 
+openai.api_key=OPENAI_API_KEY
 
 systemPrompt = (
     "You are an assistant for the bus service. "
@@ -100,13 +100,14 @@ def confirmation_response ( too_arg  , uniqueId , selectedSeat , selectedSeatNo)
     phone = too_arg['phone']
     dropping_point = too_arg['dropping_point']
     boarding_point = too_arg['boarding_point']
+    nrc_no = too_arg['nrc_no']
     seatId = uniqueId.split('/')
     # Optional payload for POST
     payload = {
         "boarding_point": boarding_point ,
         "dropping_point" : dropping_point ,
-        "selected_seat": f"{selectedSeat}," ,
-        "seat_no": f'{selectedSeatNo},' ,
+        "selected_seat": f"'{selectedSeat},'" ,
+        "seat_no": f"{selectedSeatNo},", 
         "seat_id": seatId[1] ,
         "service" : 0 ,
         "travel_date" : "2025-02-15" ,
@@ -122,26 +123,31 @@ def confirmation_response ( too_arg  , uniqueId , selectedSeat , selectedSeatNo)
         "note" : "TT" ,
         "offer_code" : "JJNEW" ,
         "offer_amount" : 0 ,
-        "nrc_no" : "12/KASANA(N)123456" ,
+        "nrc_no" : nrc_no ,
         "ostype" : "mobile" ,
     }
     print(payload)
     response = requests.post(url, headers=headers , json=payload).json()
-    if response.get("success"):
+    print(response)
+    if response.get("paymentUrl"):
         customData = {
-            f"booking_confirmation": f"Customer name {name} successfully booked the route from Yangon to Mandalay with ref No: SM-AAA001.",
+            f"booking_confirmation": f"Customer name {name} successfully booked the route from Yangon to Mandalay with ref No: {response.get('refCode')}",
             f"customer_details": f"Name: {name}, Email: {email}, Phone: {phone}, Dropping Point: {dropping_point}, Starting Point: {boarding_point} Bus Station.",
             "system_policy": "This customer can manage the booking at jjexpress.net using their reference number.|"
         }
+        data = generate_qrcode(response.get('paymentUrl'))
+        initState = 1
     else : 
         customData = {
             "booking_failed": f"Booking failed. The seat was already reserved by another customer. {name} could not complete the booking for the route from Yangon to Mandalay.",
             "customer_details": f"Name: {name}, Email: {email}, Phone: {phone}, Dropping Point: {dropping_point}, Starting Point: {boarding_point} Bus Station.",
             "system_policy": "Please try booking again with a different seat. Visit jjexpress.net for availability and support.|"
         }
+        initState = 4
+        data = ''
     retriever = CustomDataRetriever(custom_data=customData)
     rag_chain = create_retrieval_chain(retriever, questionAnswerChain)
-    return rag_chain.invoke({"input": "provid my booking information"})
+    return rag_chain.invoke({"input": "provid my booking information"}) , initState ,data 
     
 function_descriptions = [
     {
@@ -152,15 +158,19 @@ function_descriptions = [
             "properties": {
                 "name": {
                     "type": "string",
-                    "description": "The user name",
+                    "description": "The user name (Ye Win Naing)",
                 },
                 "email": {
                     "type": "string",
                     "description": "User Email",
                 },
+                "nrc_no" : {
+                    "type" : "string" ,
+                    "description" : "National Registration Card for myanamr example - 12/nrc(n)123456"
+                },
                 "phone": {
                     "type": "string",
-                    "description": "User Phone",
+                    "description": "User Phone 0912345678",
                 },
                 "dropping_point" : {
                     "type": "string",
@@ -171,13 +181,13 @@ function_descriptions = [
                     "description": "The Boarding point (Aungmingalar , city...)",
                 },
             },
-            "required": ["name", "email" , "phone" , 'dropping_point' , 'boarding_point'  ],
+            "required": ["name", "email" , "phone" , 'dropping_point' , 'boarding_point' , "nrc_no" ],
         },
     }
 ]
 
 def analyze_input (input , selectedSeat , uniqueId , selectedSeatNo )  : 
-    response = client.chat.completions.create(
+    response = openai.chat.completions.create( 
             model="gpt-4-turbo",
             messages=[
                 {
@@ -202,16 +212,16 @@ def analyze_input (input , selectedSeat , uniqueId , selectedSeatNo )  :
         # Check if a function was called
     message = response.choices[0].message
 
-    if "tool_calls" in message:
+    if message.tool_calls:
         tool_call = response.choices[0].message.tool_calls[0]
         tool_args = json.loads(tool_call.function.arguments)
-        response = confirmation_response(tool_args , uniqueId , selectedSeat , selectedSeatNo)
-        data = "https://your-payment-link.com/order/12345"
-        response['init_state'] = 4
-        response['info'] = generate_qrcode(data)
+        response , initState , data = confirmation_response(tool_args , uniqueId , selectedSeat , selectedSeatNo)
+        # data = "https://your-payment-link.com/order/12345"
+        response['init_state'] = initState
+        response['info'] = data
     else:
         response = {}
-        response['answer'] = message["content"] 
+        response['answer'] = message.content
         response['init_state'] = 4
         response['info'] = ""
     return response        
