@@ -26,7 +26,7 @@ headers = {
 }
 
 # API endpoint
-url = "http://188.166.231.0/api/mobile/v1/get-checkout-data"
+url = "https://myanmarbustickets.com/api/mobile/v1/get-checkout-data"
 
 # Optional payload for POST
 
@@ -41,7 +41,7 @@ class CustomDataRetrieverForSeatPlan(BaseRetriever):
         super().__init__(**kwargs)
         self.custom_data = custom_data or {
             "seat_info": (
-                "http://188.166.231.0/bus/seat_plan/226/149665?departure_date=04-04-2025&adult=1&is_foreigner=false&type=bus&passenger_type=male"
+                "https://myanmarbustickets.com/bus/seat_plan/226/149665?departure_date=04-04-2025&adult=1&is_foreigner=false&type=bus&passenger_type=male"
             )
         }
 
@@ -56,7 +56,7 @@ def customDataRetrieval(data , travel_date)  -> CustomDataRetrieverForSeatPlan:
     
     custom_data = {
         "seat_info": (
-            f"http://188.166.231.0/bus/seat_plan/{data}?departure_date={travel_date}&adult=1&is_foreigner=false&type=bus&passenger_type=male"
+            f"https://myanmarbustickets.com/bus/seat_plan/{data}?departure_date={travel_date}&adult=1&is_foreigner=false&type=bus&passenger_type=male"
         )
     }
     

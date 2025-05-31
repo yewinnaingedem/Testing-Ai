@@ -39,7 +39,7 @@ systemPrompt = (
     "🔹 Use bullet points or numbering for readability.\n\n"
 
     "📌 **Context for the Answer:**\n"
-    "Only ask 'Would you like to view the detailed seat plan?' if travel date and other info are provided.\n\n"
+    "Only ask 'Would you like to view the detailed seat plan 😊?' if travel date and other info are provided.\n\n"
 
     "{context}"
 )

@@ -32,7 +32,7 @@ headers = {
 }
 
 # API endpoint
-url = "http://188.166.231.0/api/mobile/v1/confirm-booking"
+url = "https://myanmarbustickets.com/api/mobile/v1/confirm-booking"
 
 
 
