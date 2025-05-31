@@ -137,7 +137,7 @@ def chat():
     if perviousInput is None:
         perviousInput = ""
 
-    input = perviousInput + "." + input
+    
     
 
     if  initState == 2:
@@ -147,6 +147,7 @@ def chat():
                     ("human", "{input}")
                 ]
             )
+        perviousInput  = ""
         questionAnswerChain = create_stuff_documents_chain(llm, prompt)
         custom_retriever = customDataRetrieval(uniqueId , travel_date)
         ragChain = create_retrieval_chain(custom_retriever, questionAnswerChain)
@@ -177,6 +178,7 @@ def chat():
             response['init_state'] = 2 if did_replace else 1
             response['info'] = ""
     elif  initState ==  3 :
+        perviousInput  = ""
         response = {}
         response['answer'] , value  , key , initState = response_selected(input , avaliableSeats , uniqueId , boarding_point , dropping_point )
         selectedSeatId = value 
@@ -185,6 +187,7 @@ def chat():
         response['init_state'] = initState
         response['info'] = ""            
     elif  initState ==  4 :
+        input = perviousInput + "." + input
         perviousInput = input 
         response = analyze_input(input , selectedSeatId , uniqueId , selectedSeatNo)
         response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer']) 
@@ -213,6 +216,7 @@ def chat():
         questionAnswerChain = create_stuff_documents_chain(llm, prompt)
         ragChain = create_retrieval_chain(retriver, questionAnswerChain)
         input , did_replace = replace_relative_or_absolute_date(input)
+        input = perviousInput + "." + input
         response = ragChain.invoke({"input": input }) 
         context_docs = response["context"]
         response['init_state'] = 2 if did_replace else 1
@@ -228,10 +232,13 @@ def chat():
         travel_date = [doc.metadata.get('travel_date', '') for doc in retrieved_docs]
         boarding_point = [doc.metadata.get('boarding_point', '') for doc in retrieved_docs][0]
         dropping_point = [doc.metadata.get('dropping_point', '') for doc in retrieved_docs][0]
+        isFAQ = [doc.metadata.get('source', '') for doc in retrieved_docs][0]
+        print(isFAQ)
         uniqueId = data[0] 
         selectedSeatNo = ""
         selectedSeatId = ""
-        perviousInput = input
+        perviousInput = input if isFAQ != "FAQ" else ""
+        
     if 'answer' in response:
         return jsonify({
             "answer": response['answer'],
