@@ -231,10 +231,11 @@ def chat():
         travel_date = [doc.metadata.get('travel_date', '') for doc in retrieved_docs]
         boarding_point = [doc.metadata.get('boarding_point', '') for doc in retrieved_docs][0]
         dropping_point = [doc.metadata.get('dropping_point', '') for doc in retrieved_docs][0]
+        isFAQ = [doc.metadata.get('source', '') for doc in retrieved_docs][0]
         uniqueId = data[0] 
         selectedSeatNo = ""
         selectedSeatId = ""
-        perviousInput = input 
+        perviousInput = input if isFAQ != "FAQ" else ""
         
     if 'answer' in response:
         return jsonify({
