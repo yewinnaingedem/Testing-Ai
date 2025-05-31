@@ -220,7 +220,6 @@ def chat():
         response = ragChain.invoke({"input": input }) 
         context_docs = response["context"]
         response['init_state'] = 2 if did_replace else 1
-        print(context_docs)
         if not context_docs:
             response['init_state'] = 1
         elif "❌ there is no route for that" in response['answer'].lower():
@@ -232,12 +231,10 @@ def chat():
         travel_date = [doc.metadata.get('travel_date', '') for doc in retrieved_docs]
         boarding_point = [doc.metadata.get('boarding_point', '') for doc in retrieved_docs][0]
         dropping_point = [doc.metadata.get('dropping_point', '') for doc in retrieved_docs][0]
-        isFAQ = [doc.metadata.get('source', '') for doc in retrieved_docs][0]
-        print(isFAQ)
         uniqueId = data[0] 
         selectedSeatNo = ""
         selectedSeatId = ""
-        perviousInput = input if isFAQ != "FAQ" else ""
+        perviousInput = input 
         
     if 'answer' in response:
         return jsonify({
