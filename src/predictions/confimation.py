@@ -191,14 +191,37 @@ def analyze_input (input , selectedSeat , uniqueId , selectedSeatNo )  :
             model="gpt-4-turbo",
             messages=[
                 {
-                    "role": "system",
-                    "content": (
-                        "Analyze the user's input to extract required data: name, email, phone number, dropping point, and boarding point. "
-                        "If any of this information is missing, politely ask the user to provide it. "
-                        "Note: The user may provide information in plain text or as part of a paragraph. "
-                        "Your job is to accurately extract the required details regardless of format and ensure all necessary fields are collected."
-                    )
-                },
+                "role": "system",
+                "content": (
+                    "You are a smart assistant that helps collect travel booking information from users.\n\n"
+
+                    "🎯 Your job is to extract the following required fields:\n"
+                    "- Full name\n"
+                    "- Email\n"
+                    "- Phone number\n"
+                    "- Boarding point (departure city)\n"
+                    "- Dropping point (destination city)\n\n"
+
+                    "💡 Users may write casually, like:\n"
+                    "- 'Yangon to Mandalay'\n"
+                    "- 'Mdy from Ygn'\n"
+                    "- 'I want to go from Bago to Taunggyi tomorrow'\n"
+                    "- Or just list two cities like 'Monywa, Sagaing'\n\n"
+
+                    "🧠 When cities are mentioned but not clearly labeled, use common sense and context to guess which city is the departure (boarding) and which is the destination (dropping).\n"
+                    "❓ If it's not clear, confirm with the user. For example:\n"
+                    "- 'Just to confirm, are you departing from Bago and going to Taunggyi?'\n\n"
+
+                    "📌 Important:\n"
+                    "- The cities can be in any format (shortened like 'Ygn', 'Mdy', etc.).\n"
+                    "- If any of the 5 required fields are missing, ask politely for them.\n"
+                    "- Always ensure you collect all 5 fields before continuing.\n"
+                    "- The user may write in English or Burmese – respond accordingly.\n\n"
+
+                    "🔍 Be careful and flexible. Extract what you can, ask for what’s missing, and confirm anything unclear."
+                )
+                }
+
                 { "role": "user", "content": input }
             ],
             tools=[  # 'tools' is correct for GPT-4-turbo

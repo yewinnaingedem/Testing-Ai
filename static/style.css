@@ -63,8 +63,13 @@
     display: flex;
     flex-direction: column;
     flex-wrap: nowrap;
-    height: 480px;
+    height: 750vh;
     overflow: auto;
+}
+
+pre, pre * {
+  pointer-events: none;
+  user-select: text; /* Optional: allow text selection */
 }
 
 .single-chat-tab .chat-body .message-content {
