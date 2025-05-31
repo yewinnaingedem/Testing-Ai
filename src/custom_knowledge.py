@@ -82,7 +82,7 @@ def get_dynamic_seat_data(boarding_point, dropping_point, available_seats = []):
     return {
         "seat_avaliable": ", ".join(available_seats),
         "dropping_point" : f"{dropping_point}" , 
-        "boarding_point" : f"{dropping_point}" ,
+        "boarding_point" : f"{boarding_point}" ,
         "seat_policy": "Seats can be held for up to 15 minutes. Bookings can be managed from the History page within 30 days."
     }
 

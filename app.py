@@ -184,7 +184,7 @@ def chat():
         selectedSeatId = value 
         selectedSeatNo = key 
         response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer']) 
-        response['init_state'] = initState
+        response['init_state'] = 4
         response['info'] = ""            
     elif  initState ==  4 :
         input = perviousInput + "." + input
