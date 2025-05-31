@@ -34,7 +34,7 @@ $(document).ready(() => {
             $("input[name='selectedSeatId]").val('') ;
             // $("input[name='perviousInput]").val('') ;
             $.ajax({
-                url: 'https://ai_bot.official-crystal.com/get',
+                url: 'http://139.59.232.204/get',
                 method: 'post',
                 contentType: "application/json", 
                 data: JSON.stringify({ msg: input  , initState  , avaliable_seats : getAvaliableSeats() , uniqueId , selectedSeatId , selectedSeatNo , perviousInput , travelDate , boardingPoint , droppingPoint}),
