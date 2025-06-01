@@ -185,14 +185,16 @@ def chat():
         selectedSeatNo = key 
         response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer']) 
         response['init_state'] = initState
+        
         response['info'] = ""            
     elif  initState ==  4 :
         input = perviousInput + "." + input
         perviousInput = input 
-        response = analyze_input(input , selectedSeatId , uniqueId , selectedSeatNo)
+        response  = analyze_input(input , selectedSeatId , uniqueId , selectedSeatNo)
         response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer']) 
-        response['intiState'] =  1
-        response['uniqueId'] = uniqueId
+        if response['init_state'] ==  1 : 
+            perviousInput = ""
+        response['uniqueId'] = uniqueId 
     else : 
         response = openai.chat.completions.create( 
             model="gpt-4", 
@@ -206,7 +208,7 @@ def chat():
         )
         input = response.choices[0].message.content  
         # input = GoogleTranslator(source='auto', target='en').translate(input)
-        print(input)
+        # print(input)
         prompt = ChatPromptTemplate.from_messages(
                     [
                         ("system", systemPrompt),
@@ -219,6 +221,8 @@ def chat():
         input = perviousInput + "." + input
         response = ragChain.invoke({"input": input }) 
         context_docs = response["context"]
+        # print(context_docs)
+        
         response['init_state'] = 2 if did_replace else 1
         if not context_docs:
             response['init_state'] = 1
@@ -226,12 +230,12 @@ def chat():
             response['init_state'] = 1
         response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer']) 
         response['info'] = ""
-        retrieved_docs = retriver.get_relevant_documents(input)
-        data = [doc.metadata.get('unique_id', '') for doc in retrieved_docs]
-        travel_date = [doc.metadata.get('travel_date', '') for doc in retrieved_docs]
-        boarding_point = [doc.metadata.get('boarding_point', '') for doc in retrieved_docs][0]
-        dropping_point = [doc.metadata.get('dropping_point', '') for doc in retrieved_docs][0]
-        isFAQ = [doc.metadata.get('source', '') for doc in retrieved_docs][0]
+        # retrieved_docs = retriver.get_relevant_documents(input)
+        data = [doc.metadata.get('unique_id', '') for doc in context_docs]
+        travel_date = [doc.metadata.get('travel_date', '') for doc in context_docs]
+        boarding_point = [doc.metadata.get('boarding_point', '') for doc in context_docs][0]
+        dropping_point = [doc.metadata.get('dropping_point', '') for doc in context_docs][0]
+        isFAQ = [doc.metadata.get('source', '') for doc in context_docs][0]
         uniqueId = data[0] 
         selectedSeatNo = ""
         selectedSeatId = ""

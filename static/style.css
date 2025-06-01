@@ -87,6 +87,12 @@ pre, pre * {
     background-color: #ff9797;
     text-align: left;
 }
+.no-wrap-input {
+  white-space: nowrap;         /* Prevent line breaks */
+  overflow: hidden;            /* Hide overflowed text */
+  text-overflow: ellipsis;     /* Add ... when text is too long */
+}
+
 
 .single-chat-tab .chat-body .message-content.receiver label {
     text-align: left;

@@ -76,14 +76,18 @@ prompt = ChatPromptTemplate.from_messages(
 
 questionAnswerChain = create_stuff_documents_chain(llm, prompt)
 
-def get_dynamic_seat_data(boarding_point, dropping_point, available_seats = []):
+def get_dynamic_seat_data(selectedSeatNo , boarding_point, dropping_point, available_seats = []):
     if available_seats is None:
         available_seats = []
     return {
-        "seat_avaliable": ", ".join(available_seats),
+        "seat_avaliable": f"Customer selected seat Number is {selectedSeatNo}",
         "dropping_point" : f"{dropping_point}" , 
         "boarding_point" : f"{boarding_point}" ,
-        "seat_policy": "Seats can be held for up to 15 minutes. Bookings can be managed from the History page within 30 days."
+        "seat_policy": (
+            "Your seat has been successfully selected and held for you. "
+            "Seats are reserved for up to 15 minutes. "
+            "Please proceed to confirm your booking within this time. "
+        )
     }
 
 
@@ -102,40 +106,60 @@ class CustomDataRetriever(BaseRetriever):
         return [Document(page_content=f"{key}: {value}") for key, value in self.custom_data.items()]
 
 def get_seat_id_from_input(user_input, seat_map):
-    # Regex to match seat codes like A1, B12, K9, etc.
-    matches = re.findall(r'\b([A-Ka-k]\d{1,2})\b', user_input)
     result = {}
+    user_input_upper = user_input.upper()
 
-    for seat_code in matches:
-        seat_code = seat_code.upper()
-        if seat_code in seat_map:
+    for seat_code in seat_map:
+        pattern = r'\b' + re.escape(seat_code.upper()) + r'\b'
+        if re.search(pattern, user_input_upper):
             result[seat_code] = seat_map[seat_code]
 
-    return result 
+    return result
 
 
-def response_selected (input , available_seats ,  unique , boarding_point , dropping_point) :
+def response_selected(input, available_seats, unique, boarding_point, dropping_point):
     result = get_seat_id_from_input(input, available_seats)
+    print(result)
     if result:  
         key = list(result.keys())[0]
         value = result[key]
         seatId = unique.split('/')[1]
+        
         payload = {
             "seatId": seatId,
             "citizenType": "local",
             "seatCount": '1',
             "selectedSeats": value,
         }
-        response = requests.post(url, headers=headers , json=payload)
-        print(response.json())
-        seat_data = get_dynamic_seat_data(boarding_point , dropping_point , available_seats  )
-        retriever = CustomDataRetriever(custom_data=seat_data)
-        rag_chain = create_retrieval_chain(retriever, questionAnswerChain)
-        response = rag_chain.invoke({"input": input})
-        return response["answer"] , value , key , 4
-    else :
-        seat_data = get_dynamic_seat_data(boarding_point , dropping_point , available_seats  )
-        retriever = CustomDataRetriever(custom_data=seat_data)
-        rag_chain = create_retrieval_chain(retriever, questionAnswerChain)
-        response = rag_chain.invoke({"input": input})
-        return response["answer"] , 0 , 0 ,3 
+        print(payload)
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+            response_data = response.json()
+            print(response_data)
+            # ✅ Check if the booking was successful
+            if response.status_code == 200 and response_data.get("subTotalPrice"):
+                seat_data = get_dynamic_seat_data(key ,boarding_point, dropping_point, available_seats)
+                retriever = CustomDataRetriever(custom_data=seat_data)
+                rag_chain = create_retrieval_chain(retriever, questionAnswerChain)
+                rag_response = rag_chain.invoke({"input": input})
+                return rag_response["answer"], value, key, 4
+            else:
+                # 🛑 Server rejected seat selection
+                reason = response_data.get("message", "Unknown error")
+                print("Seat selection failed:", reason)
+        
+        except Exception as e:
+            print("Error while processing seat selection:", str(e))
+
+    seat_data =  seat_data = {
+        "seat_avaliable": ", ".join(available_seats),
+        "seat_policy": (
+            "We couldn't confirm your seat selection. This might be due to an invalid seat number "
+            "or a temporary issue with the booking system. Please review the available seats and try again. "
+            "Seats can be held for up to 15 minutes and can be managed from the History page within 30 days."
+        )
+    }
+    retriever = CustomDataRetriever(custom_data=seat_data)
+    rag_chain = create_retrieval_chain(retriever, questionAnswerChain)
+    response = rag_chain.invoke({"input": input})
+    return response["answer"], 0, 0, 3
