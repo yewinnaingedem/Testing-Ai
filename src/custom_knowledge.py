@@ -14,7 +14,7 @@ import json
 # The API endpoint from Laravel
 
 # Your Bearer token (you probably get this after login)
-token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl9jaGlsZF9hY2NvdW50X2lkIjpudWxsLCJzdWIiOjU5MCwiaXNzIjoiaHR0cDovLzE4OC4xNjYuMjMxLjAvYXBpL21vYmlsZS92MS9hdXRoZW50aWNhdGUiLCJpYXQiOjE3NDgyNjIxNzgsImV4cCI6MTc0ODc4MDU3OCwibmJmIjoxNzQ4MjYyMTc4LCJqdGkiOiJrVDZsQmRvODJ2MHk3eGpvIn0.Is1dPNkkfus0AhPDTiw_Deft3HTNqmr9w2d9IgXi2GA"
+token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl9jaGlsZF9hY2NvdW50X2lkIjpudWxsLCJzdWIiOjM2MDkwLCJpc3MiOiJodHRwOi8vMTg4LjE2Ni4yMzEuMC9hcGkvbW9iaWxlL3YxL2F1dGhlbnRpY2F0ZSIsImlhdCI6MTc0ODg2NjM3MywiZXhwIjoxNzQ5Mzg0NzczLCJuYmYiOjE3NDg4NjYzNzMsImp0aSI6IkFyTFZyMjJlaW1HbkxnTDEifQ.kFtfSo6K6zuxy_AR28rA9IkclwhFoLCDRDZXenc0zUw"
 
 # Headers with Bearer token
 import requests
@@ -131,7 +131,7 @@ def response_selected(input, available_seats, unique, boarding_point, dropping_p
             "seatCount": '1',
             "selectedSeats": value,
         }
-        print(payload)
+        # print(payload)
         try:
             response = requests.post(url, headers=headers, json=payload)
             response_data = response.json()

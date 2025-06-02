@@ -4,6 +4,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 from flask import Flask ,render_template , jsonify , request 
 import requests
+
 from deep_translator import GoogleTranslator
 from langchain_groq import ChatGroq
 from langchain.chains import create_retrieval_chain
@@ -57,7 +58,10 @@ docsearch  = PineconeVectorStore.from_existing_index(
     embedding = embeddings
 )
 
-retriver = docsearch.as_retriever(search_type="similarity" , search_kwargs={'k' : 1 }) 
+retriver = docsearch.as_retriever(  
+    search_type="similarity",
+    search_kwargs={'k': 4}
+) 
 
 
 def replace_relative_or_absolute_date(sentence, base_date=None):
@@ -147,7 +151,7 @@ def chat():
                     ("human", "{input}")
                 ]
             )
-        perviousInput  = ""
+        # perviousInput  = ""
         questionAnswerChain = create_stuff_documents_chain(llm, prompt)
         custom_retriever = customDataRetrieval(uniqueId , travel_date)
         ragChain = create_retrieval_chain(custom_retriever, questionAnswerChain)
@@ -173,9 +177,10 @@ def chat():
             questionAnswerChain = create_stuff_documents_chain(llm, prompt)
             ragChain = create_retrieval_chain(retriver, questionAnswerChain)
             input , did_replace = replace_relative_or_absolute_date(input)
+            input = perviousInput + "." + input
             response = ragChain.invoke({"input": input}) 
             response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer']) 
-            response['init_state'] = 2 if did_replace else 1
+            response['init_state'] =  1
             response['info'] = ""
     elif  initState ==  3 :
         perviousInput  = ""
@@ -191,7 +196,7 @@ def chat():
         input = perviousInput + "." + input
         perviousInput = input 
         response  = analyze_input(input , selectedSeatId , uniqueId , selectedSeatNo)
-        response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer']) 
+        # response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer']) 
         if response['init_state'] ==  1 : 
             perviousInput = ""
         response['uniqueId'] = uniqueId 
@@ -207,8 +212,6 @@ def chat():
             ]
         )
         input = response.choices[0].message.content  
-        # input = GoogleTranslator(source='auto', target='en').translate(input)
-        # print(input)
         prompt = ChatPromptTemplate.from_messages(
                     [
                         ("system", systemPrompt),
@@ -217,30 +220,43 @@ def chat():
                 )
         questionAnswerChain = create_stuff_documents_chain(llm, prompt)
         ragChain = create_retrieval_chain(retriver, questionAnswerChain)
-        input , did_replace = replace_relative_or_absolute_date(input)
+        did_replace , status = replace_relative_or_absolute_date(input)
         input = perviousInput + "." + input
-        response = ragChain.invoke({"input": input }) 
+        response = ragChain.invoke({"input": input})
         context_docs = response["context"]
-        # print(context_docs)
-        
-        response['init_state'] = 2 if did_replace else 1
+        match = re.search(r'page_content\s*id\s*:\s*(\d+)', response['answer'], re.IGNORECASE)
+        page_index = int(match.group(1)) if match else None
+        matched_doc = context_docs[page_index - 1  if page_index else 0 ]
+        response['init_state'] = 2 if status else 1
         if not context_docs:
             response['init_state'] = 1
         elif "❌ there is no route for that" in response['answer'].lower():
             response['init_state'] = 1
+        print(response['answer'])
+        pattern = r'page\s*content\s*id\s*:'
+
+        # Search for the pattern in the raw_ai_answer with IGNORECASE flag
+        match = re.search(pattern, response['answer'], re.IGNORECASE)
+
+        if match:
+            # If a match is found, get its starting index
+            start_index = match.start()
+            # Slice the string from the beginning up to the start of the match
+            response['answer'] = response['answer'][:start_index].strip()
+        else:
+            # If the pattern is not found, keep the original response
+            response['answer'] = response['answer']
+
         response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer']) 
         response['info'] = ""
-        # retrieved_docs = retriver.get_relevant_documents(input)
-        data = [doc.metadata.get('unique_id', '') for doc in context_docs]
-        travel_date = [doc.metadata.get('travel_date', '') for doc in context_docs]
-        boarding_point = [doc.metadata.get('boarding_point', '') for doc in context_docs][0]
-        dropping_point = [doc.metadata.get('dropping_point', '') for doc in context_docs][0]
-        isFAQ = [doc.metadata.get('source', '') for doc in context_docs][0]
-        uniqueId = data[0] 
+        data = matched_doc.metadata.get('unique_id', '')
+        travel_date = matched_doc.metadata.get('travel_date', '')
+        boarding_point = matched_doc.metadata.get('boarding_point', '')
+        dropping_point = matched_doc.metadata.get('dropping_point', '')
+        uniqueId = data if data else 0 
         selectedSeatNo = ""
         selectedSeatId = ""
-        perviousInput = input if isFAQ != "FAQ" else ""
-        
+        perviousInput = input if status else ""
     if 'answer' in response:
         return jsonify({
             "answer": response['answer'],

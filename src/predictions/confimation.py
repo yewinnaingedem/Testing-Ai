@@ -13,7 +13,7 @@ import json
 import openai
 import qrcode
 import base64
-token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl9jaGlsZF9hY2NvdW50X2lkIjpudWxsLCJzdWIiOjU5MCwiaXNzIjoiaHR0cDovLzE4OC4xNjYuMjMxLjAvYXBpL21vYmlsZS92MS9hdXRoZW50aWNhdGUiLCJpYXQiOjE3NDgyNjIxNzgsImV4cCI6MTc0ODc4MDU3OCwibmJmIjoxNzQ4MjYyMTc4LCJqdGkiOiJrVDZsQmRvODJ2MHk3eGpvIn0.Is1dPNkkfus0AhPDTiw_Deft3HTNqmr9w2d9IgXi2GA"
+token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl9jaGlsZF9hY2NvdW50X2lkIjpudWxsLCJzdWIiOjM2MDkwLCJpc3MiOiJodHRwOi8vMTg4LjE2Ni4yMzEuMC9hcGkvbW9iaWxlL3YxL2F1dGhlbnRpY2F0ZSIsImlhdCI6MTc0ODg2NjM3MywiZXhwIjoxNzQ5Mzg0NzczLCJuYmYiOjE3NDg4NjYzNzMsImp0aSI6IkFyTFZyMjJlaW1HbkxnTDEifQ.kFtfSo6K6zuxy_AR28rA9IkclwhFoLCDRDZXenc0zUw"
 
 # Headers with Bearer token
 import requests
@@ -49,10 +49,10 @@ openai.api_key=OPENAI_API_KEY
 
 systemPrompt = (
     "You are an assistant for the bus service. "
-    "Confrim that user with given information"
+    "Confirm that user with given information. "  
+    "Always answer in myanmar (burmes) nice, kind and warm. " 
     "{context}"
 )
-
 def generate_qrcode (data) :     
     qr = qrcode.make(data)
     buffer = BytesIO()
@@ -197,6 +197,7 @@ def analyze_input (input , selectedSeat , uniqueId , selectedSeatNo )  :
                         "If any of this information is missing, politely ask the user to provide it. "
                         "Note: The user may provide information in plain text or as part of a paragraph. "
                         "Your job is to accurately extract the required details regardless of format and ensure all necessary fields are collected."
+                        "Always answer in myanmar (burmes)"
                     )
                 },
                 { "role": "user", "content": input }
