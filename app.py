@@ -224,39 +224,19 @@ def chat():
         input = perviousInput + "." + input
         response = ragChain.invoke({"input": input})
         context_docs = response["context"]
-        print(context_docs)
-        match = re.search(r'page_content\s*id\s*:\s*(\d+)', response['answer'], re.IGNORECASE)
-        page_index = int(match.group(1)) if match else None
-        matched_doc = context_docs[page_index - 1  if page_index else 0 ]
         response['init_state'] = 2 if status else 1
         if not context_docs:
             response['init_state'] = 1
         elif "❌ there is no route for that" in response['answer'].lower():
             response['init_state'] = 1
-        print(response['answer'])
-        match = re.search(r'\b(JJ[A-Z]+)\b', response['answer'])
+        match = re.search(r'\b(JJ[A-Z]{5})\b', response['answer'])
         bus_unique_id = match.group(1) if match else None
-        print(bus_unique_id)
         matching_doc = None
-
         if bus_unique_id:
             for doc in context_docs:
-                if f'bus_unique_id : {bus_unique_id}' in doc.page_content or f'bus_uniqe_id : {bus_unique_id}' in doc.page_content:
+                if doc.metadata.get("custom_unique_id") == bus_unique_id:
                     matching_doc = doc
-                    
                     break
-        pattern = r'page\s*content\s*id\s*:'
-
-        # Search for the pattern in the raw_ai_answer with IGNORECASE flag
-        match = re.search(pattern, response['answer'], re.IGNORECASE)
-        if match:
-            # If a match is found, get its starting index
-            start_index = match.start()
-            # Slice the string from the beginning up to the start of the match
-            response['answer'] = response['answer'][:start_index].strip()
-        else:
-            # If the pattern is not found, keep the original response
-            response['answer'] = response['answer']
         response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer']) 
         response['info'] = ""
         if matching_doc:
@@ -265,12 +245,12 @@ def chat():
             boarding_point = matching_doc.metadata.get('boarding_point', '')
             dropping_point = matching_doc.metadata.get('dropping_point', '')
             uniqueId = data if data else 0
+            perviousInput = input
         else:
             data = travel_date = boarding_point = dropping_point = uniqueId = ''
-        print(data , travel_date , boarding_point , dropping_point , uniqueId)
+            perviousInput = ""
         selectedSeatNo = ""
         selectedSeatId = ""
-        perviousInput = input if status else ""
     if 'answer' in response:
         return jsonify({
             "answer": response['answer'],

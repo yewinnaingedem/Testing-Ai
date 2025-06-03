@@ -32,7 +32,7 @@ systemPrompt = (
 
     "🚌 **Bus & Crew Information:**\n"
     "11️⃣ Mention the bus company name, bus type/class.\n"
-    "**cleary mention the ** bus_unique_id **  that is important (e.g. , JJAAAC) \n"
+    "**cleary mention the ** bus_unique_id **  that is important (e.g. , JJAAAAC) \n"
     "    **Carefully read and confirm the travel date**. If the travel date is mismatched or incorrect, **clearly state this** and **emphasize its importance**.\n"
     "12️⃣ Include bus services (e.g., WiFi, snacks, reclining seats) if provided.\n\n"
 
