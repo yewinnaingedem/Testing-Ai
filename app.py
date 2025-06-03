@@ -8,7 +8,7 @@ import requests
 from deep_translator import GoogleTranslator
 from langchain_groq import ChatGroq
 from langchain.chains import create_retrieval_chain
-from langchain.prompts import ChatPromptTemplate
+from langchain.prompts import ChatPromptTemplate  
 from langchain_pinecone import PineconeVectorStore
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from dotenv import load_dotenv 
@@ -224,6 +224,7 @@ def chat():
         input = perviousInput + "." + input
         response = ragChain.invoke({"input": input})
         context_docs = response["context"]
+        print(context_docs)
         match = re.search(r'page_content\s*id\s*:\s*(\d+)', response['answer'], re.IGNORECASE)
         page_index = int(match.group(1)) if match else None
         matched_doc = context_docs[page_index - 1  if page_index else 0 ]
@@ -233,11 +234,21 @@ def chat():
         elif "❌ there is no route for that" in response['answer'].lower():
             response['init_state'] = 1
         print(response['answer'])
+        match = re.search(r'\b(JJ[A-Z]+)\b', response['answer'])
+        bus_unique_id = match.group(1) if match else None
+        print(bus_unique_id)
+        matching_doc = None
+
+        if bus_unique_id:
+            for doc in context_docs:
+                if f'bus_unique_id : {bus_unique_id}' in doc.page_content or f'bus_uniqe_id : {bus_unique_id}' in doc.page_content:
+                    matching_doc = doc
+                    
+                    break
         pattern = r'page\s*content\s*id\s*:'
 
         # Search for the pattern in the raw_ai_answer with IGNORECASE flag
         match = re.search(pattern, response['answer'], re.IGNORECASE)
-
         if match:
             # If a match is found, get its starting index
             start_index = match.start()
@@ -246,14 +257,17 @@ def chat():
         else:
             # If the pattern is not found, keep the original response
             response['answer'] = response['answer']
-
         response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer']) 
         response['info'] = ""
-        data = matched_doc.metadata.get('unique_id', '')
-        travel_date = matched_doc.metadata.get('travel_date', '')
-        boarding_point = matched_doc.metadata.get('boarding_point', '')
-        dropping_point = matched_doc.metadata.get('dropping_point', '')
-        uniqueId = data if data else 0 
+        if matching_doc:
+            data = matching_doc.metadata.get('unique_id', '')
+            travel_date = matching_doc.metadata.get('travel_date', '')
+            boarding_point = matching_doc.metadata.get('boarding_point', '')
+            dropping_point = matching_doc.metadata.get('dropping_point', '')
+            uniqueId = data if data else 0
+        else:
+            data = travel_date = boarding_point = dropping_point = uniqueId = ''
+        print(data , travel_date , boarding_point , dropping_point , uniqueId)
         selectedSeatNo = ""
         selectedSeatId = ""
         perviousInput = input if status else ""

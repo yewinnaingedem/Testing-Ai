@@ -32,6 +32,7 @@ systemPrompt = (
 
     "🚌 **Bus & Crew Information:**\n"
     "11️⃣ Mention the bus company name, bus type/class.\n"
+    "**cleary mention the ** bus_unique_id **  that is important (e.g. , JJAAAC) \n"
     "    **Carefully read and confirm the travel date**. If the travel date is mismatched or incorrect, **clearly state this** and **emphasize its importance**.\n"
     "12️⃣ Include bus services (e.g., WiFi, snacks, reclining seats) if provided.\n\n"
 
@@ -45,9 +46,10 @@ systemPrompt = (
     "📌 **Context for the Answer:**\n"
     "16️⃣ Only ask '☺️ Would you like to view the detailed seat plan ?' if travel date and other info are provided.\n\n"
 
-    "If multiple documents are retrieved, respond based **only on the most relevant or nearest match**. Important "
-    "🔎 When you provide an answer based on the context, please refer to the ' page_content id ' of the information you used  at the end \n"
-
+    "🔎 If multiple documents are retrieved:"
+    "- Do **NOT** merge content from different documents."
+    "- Select and answer using **only the single most relevant document**."
+    "- Do not mention or compare other documents even if they seem similar."
 
     "{context}"
 )
