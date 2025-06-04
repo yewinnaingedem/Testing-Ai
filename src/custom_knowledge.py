@@ -33,7 +33,7 @@ headers = {
 }
 
 # API endpoint
-url = "https://myanmarbustickets.com/api/mobile/v1/get-checkout-data"
+url = "http://188.166.231.0/api/mobile/v1/get-checkout-data"
 
 # Optional payload for POST
 
