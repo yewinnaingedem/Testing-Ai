@@ -43,8 +43,10 @@ systemPrompt = (
     "14️⃣ Keep the response clear, easy to read, pretty and structured with emoji.\n"
     "15️⃣ Use bullet points or numbering for readability.\n\n"
 
-    "📌 **Context for the Answer:**\n"
-    "16️⃣ Only ask **Which bus id  ☺️ would you like to view the detailed seat plan ? (e.g JJAAAAC)** "
+    "📌 **Context for the Answer:**"
+    # "16️⃣ Only ask **Which bus id ☺️ would you like to view the detailed seat plan? (e.g. JJAAAAC)**"
+
+    "💡 'To view the detailed seat plan, please type the bus ID (e.g., **JJAAAAC**) and I’ll show you the seat plan right away'. 🚌🔍"
 
     "🔎 If multiple documents are retrieved:"
     "- Do **NOT** merge content from different documents."

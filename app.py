@@ -20,6 +20,7 @@ from dateutil import parser
 from src.predictions.get_avaliable_seat import customDataRetrieval
 from src.helper import downloadHuggingFaceEmbedding
 import openai
+import uuid
 
 from langchain_core.retrievers import BaseRetriever
 from typing import List
@@ -303,8 +304,32 @@ def chat():
                 if doc.metadata.get("custom_unique_id") == bus_unique_id:
                     matching_doc = doc
                     break
-        response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer']) 
+        
+        pattern = r"JJ[a-zA-Z0-9]{5}"
+        bus_ids = re.findall(pattern, response['answer'])
+
+        # Step 2: Replace with safe placeholders
+        placeholder_map = {}
+        for i, bus_id in enumerate(set(bus_ids)):
+            placeholder = f"BUSID{i}"  # Alphanumeric, no special characters
+            placeholder_map[placeholder] = bus_id
+            response['answer'] = response['answer'].replace(bus_id, placeholder)
+
+
+        # Step 3: Translate
+        response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer'])
+
+        print("After translation:\n", response['answer'])
+
+        # Step 4: Replace placeholders back using regex to match partial distortions
+        for placeholder, original_id in placeholder_map.items():
+            # Replace even if translator adds extra spaces or punctuation
+            pattern = re.compile(rf"\b{re.escape(placeholder)}\b", re.IGNORECASE)
+            response['answer'] = pattern.sub(original_id, response['answer'])
+
         response['info'] = ""
+
+        
         if matching_doc:
             data = matching_doc.metadata.get('unique_id', '')
             travel_date = matching_doc.metadata.get('travel_date', '')
