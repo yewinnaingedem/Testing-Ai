@@ -1,4 +1,5 @@
 $(document).ready(() => {
+
     $("#generate_txt").on('click', function () {
         textGen() ;
     })
@@ -26,6 +27,7 @@ $(document).ready(() => {
         let droppingPoint = $("input[name='droppingPoint']").val()
         $('.material-icons').addClass('d-none');
         $('.spinner-border').removeClass('d-none');
+        const selectedDocs = JSON.parse(sessionStorage.getItem('selectedDocuments')) || [];
         if (input) {
             generateInterFace(input , 'sender' , formatTime() );
             findSeat(input) ;
@@ -34,11 +36,11 @@ $(document).ready(() => {
             $("input[name='selectedSeatId]").val('') ;
             // $("input[name='perviousInput]").val('') ;
             $.ajax({
-                url: 'http://139.59.232.204/get',
-                // url: 'http://localhost:8080/get',
+                // url: 'http://139.59.232.204/get',
+                url: 'http://localhost:8080/get',
                 method: 'post',
                 contentType: "application/json", 
-                data: JSON.stringify({ msg: input  , initState  , avaliable_seats : getAvaliableSeats() , uniqueId , selectedSeatId , selectedSeatNo , perviousInput , travelDate , boardingPoint , droppingPoint}),
+                data: JSON.stringify({ msg: input  , initState  , avaliable_seats : getAvaliableSeats() , uniqueId , selectedSeatId , selectedSeatNo , perviousInput , travelDate , boardingPoint , droppingPoint , selectedDocs}),
                 success: (res) => {
                     generateInterFace(res.answer , 'receiver' , formatTime())
                     if( res.info ) generateInterFace(res.info , 'receiver' , formatTime())
@@ -51,6 +53,7 @@ $(document).ready(() => {
                     $("input[name='boardingPoint']").val(res.boardingPoint)
                     $("input[name='droppingPoint']").val(res.droppingPoint)
                     $('.spinner-border').addClass('d-none');
+                    sessionStorage.setItem('selectedDocuments', JSON.stringify(res.documents));
                     $('.material-icons').
                     removeClass('d-none');
                 },

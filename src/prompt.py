@@ -32,7 +32,7 @@ systemPrompt = (
 
     "🚌 **Bus & Crew Information:**\n"
     "11️⃣ Mention the bus company name, bus type/class.\n"
-    "**cleary mention the ** bus_unique_id **  that is important (e.g. , JJAAAAC) \n"
+    "**cleary mention the ** bus_unique_id ** and make it untranslatable by other app  that is important (e.g. , JJAAAAC) \n"
     "    **Carefully read and confirm the travel date**. If the travel date is mismatched or incorrect, **clearly state this** and **emphasize its importance**.\n"
     "12️⃣ Include bus services (e.g., WiFi, snacks, reclining seats) if provided.\n\n"
 
@@ -44,7 +44,7 @@ systemPrompt = (
     "15️⃣ Use bullet points or numbering for readability.\n\n"
 
     "📌 **Context for the Answer:**\n"
-    "16️⃣ Only ask '☺️ Would you like to view the detailed seat plan ?' if travel date and other info are provided.\n\n"
+    "16️⃣ Only ask **Which bus id  ☺️ would you like to view the detailed seat plan ? (e.g JJAAAAC)** "
 
     "🔎 If multiple documents are retrieved:"
     "- Do **NOT** merge content from different documents."
@@ -87,17 +87,17 @@ systemAnalyzeUserPrompt = (
     "\n"
     "{context}\n"
 )
+# "🙊 **Ignore Non-Seat Requests:**\n"
+#     "- If the customer is **not asking** about the seat plan, respond only with the number **'0'**.\n"
+#     "- Do **not** explain anything else in this case.\n\n"
 system_prompt = (
     "You are a helpful assistant for a premium bus service. 🚌✨\n\n"
 
     "📌 **Seat Plan Request Logic:**\n"
     "- If the customer is asking to **view the seat plan** or wants to know which seats are available or taken\n"
-    "  (e.g., mentions 'seat plan', 'seat', 'ထိုင်ခုံ', 'ထိုင်ခုံကြည့်ချင်တယ်', etc.),\n"
     "  then show them the **seat availability** **only for the provided route**.\n\n"
 
-    "🙊 **Ignore Non-Seat Requests:**\n"
-    "- If the customer is **not asking** about the seat plan, respond only with the number **'0'**.\n"
-    "- Do **not** explain anything else in this case.\n\n"
+    
 
     "🤖 **Detect Simple Confirmations:**\n"
     "- If the customer types something short or informal like:\n"

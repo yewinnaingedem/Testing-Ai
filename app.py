@@ -63,6 +63,12 @@ retriver = docsearch.as_retriever(
     search_kwargs={'k': 4}
 ) 
 
+def extract_jj_code(text):
+    match = re.search(r"JJ[a-zA-Z0-9]{5}", text)
+    return match.group(0) if match else None
+
+def get_custom_unique_id(doc):
+    return doc.get("metadata", {}).get("custom_unique_id")
 
 def replace_relative_or_absolute_date(sentence, base_date=None):
     if base_date is None:
@@ -119,11 +125,13 @@ def build_contextual_input(chat_history, current_input, max_turns=3):
 
 @app.route('/')
 def index() : 
-    return render_template('index.html')
+    documents = []
+    return render_template('index.html', documents=documents)
     
 
 @app.route('/get', methods=["GET", "POST"])
 def chat():
+    documents = []
     input = request.form.get("msg") or request.json.get("msg") or request.args.get("msg") 
     initState = int( request.form.get("initState") or request.json.get("initState") or request.args.get("initState") )
     avaliableSeats =  request.form.get("avaliable_seats") or request.json.get("avaliable_seats") or request.args.get("avaliable_seats") 
@@ -134,15 +142,32 @@ def chat():
     travel_date =  request.form.get("travelDate") or request.json.get("travelDate") or request.args.get("travelDate") 
     boarding_point =  request.form.get("boardingPoint") or request.json.get("boardingPoint") or request.args.get("boardingPoint") 
     dropping_point =  request.form.get("droppingPoint") or request.json.get("droppingPoint") or request.args.get("droppingPoint") 
+    documents =  request.form.get("selectedDocs") or request.json.get("selectedDocs") or request.args.get("selectedDocs") 
     
     if not input:
         return jsonify({"error": "No message received"}), 400
     
     if perviousInput is None:
         perviousInput = ""
-
-    
-    
+        
+    if documents:
+        code = extract_jj_code(input)
+        if code:
+            print(code)
+            for matching_doc in documents:
+                custom_id = get_custom_unique_id(matching_doc)
+                print('matched dcu')
+                if custom_id == code:
+                    print('code')
+                    data = matching_doc["metadata"].get('unique_id', '')
+                    travel_date = matching_doc["metadata"].get('travel_date', '')
+                    boarding_point = matching_doc["metadata"].get('boarding_point', '')
+                    dropping_point = matching_doc["metadata"].get('dropping_point', '')
+                    uniqueId = data if data else 0
+                    perviousInput = input
+                    initState = 2
+        else : 
+            print('mis matched')
 
     if  initState == 2:
         prompt = ChatPromptTemplate.from_messages(
@@ -151,7 +176,6 @@ def chat():
                     ("human", "{input}")
                 ]
             )
-        # perviousInput  = ""
         questionAnswerChain = create_stuff_documents_chain(llm, prompt)
         custom_retriever = customDataRetrieval(uniqueId , travel_date)
         ragChain = create_retrieval_chain(custom_retriever, questionAnswerChain)
@@ -168,20 +192,60 @@ def chat():
             """
             response['info'] = GoogleTranslator(source='auto', target='my').translate(response['info'])
         else: 
+            response = openai.chat.completions.create( 
+            model="gpt-4", 
+            messages=[
+                {
+                    "role": "system",
+                        "content": "You are a helpful assistant that receives user travel information in the Myanmar language. Your only task is to translate the input into clear, natural English. Do not change the meaning or add extra information. Just translate."
+                    } ,
+                    {"role": "user", "content": input}
+                ]
+            )
+            input = response.choices[0].message.content  
             prompt = ChatPromptTemplate.from_messages(
-                    [
-                        ("system", systemPrompt),
-                        ("human", "{input}")
-                    ]
-                )
+                        [
+                            ("system", systemPrompt),
+                            ("human", "{input}")
+                        ]
+                    )
             questionAnswerChain = create_stuff_documents_chain(llm, prompt)
             ragChain = create_retrieval_chain(retriver, questionAnswerChain)
-            input , did_replace = replace_relative_or_absolute_date(input)
+            did_replace , status = replace_relative_or_absolute_date(input)
             input = perviousInput + "." + input
-            response = ragChain.invoke({"input": input}) 
+            response = ragChain.invoke({"input": input})
+            context_docs = response["context"]
+            documents = [ {"page_content": doc.page_content, "metadata": doc.metadata } for doc in context_docs ] 
+            
+            if not context_docs:
+                response['init_state'] = 1
+            elif "❌ there is no route for that" in response['answer'].lower():
+                response['init_state'] = 1
+            response['init_state'] = 1
+            match = re.search(r'\b(JJ[A-Z]{5})\b', response['answer'])
+            bus_unique_id = match.group(1) if match else None
+            matching_doc = None
+            if bus_unique_id:
+                for doc in context_docs:
+                    if doc.metadata.get("custom_unique_id") == bus_unique_id:
+                        matching_doc = doc
+                        break
             response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer']) 
-            response['init_state'] =  1
             response['info'] = ""
+            if matching_doc:
+                data = matching_doc.metadata.get('unique_id', '')
+                travel_date = matching_doc.metadata.get('travel_date', '')
+                boarding_point = matching_doc.metadata.get('boarding_point', '')
+                dropping_point = matching_doc.metadata.get('dropping_point', '')
+                uniqueId = data if data else 0
+                perviousInput = input
+                response['init_state'] = 1
+            else:
+                data = travel_date = boarding_point = dropping_point = uniqueId = ''
+                perviousInput = input
+                response['init_state'] = 1
+            selectedSeatNo = ""
+            selectedSeatId = ""
     elif  initState ==  3 :
         perviousInput  = ""
         response = {}
@@ -224,11 +288,13 @@ def chat():
         input = perviousInput + "." + input
         response = ragChain.invoke({"input": input})
         context_docs = response["context"]
+        documents = [ {"page_content": doc.page_content, "metadata": doc.metadata } for doc in context_docs ] 
         
         if not context_docs:
             response['init_state'] = 1
         elif "❌ there is no route for that" in response['answer'].lower():
             response['init_state'] = 1
+        response['init_state'] = 1
         match = re.search(r'\b(JJ[A-Z]{5})\b', response['answer'])
         bus_unique_id = match.group(1) if match else None
         matching_doc = None
@@ -246,10 +312,10 @@ def chat():
             dropping_point = matching_doc.metadata.get('dropping_point', '')
             uniqueId = data if data else 0
             perviousInput = input
-            response['init_state'] = 2
+            response['init_state'] = 1
         else:
             data = travel_date = boarding_point = dropping_point = uniqueId = ''
-            perviousInput = ""
+            perviousInput = input
             response['init_state'] = 1
         selectedSeatNo = ""
         selectedSeatId = ""
@@ -265,6 +331,7 @@ def chat():
             "travelDate" : travel_date , 
             "boardingPoint" : boarding_point , 
             "droppingPoint" : dropping_point, 
+            "documents" : documents
         })
     else:
         return jsonify({"error": "No answer found"}), 500

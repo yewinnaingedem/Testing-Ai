@@ -166,7 +166,7 @@ function_descriptions = [
                 },
                 "nrc_no" : {
                     "type" : "string" ,
-                    "description" : "National Registration Card for myanamr example - 12/nrc(n)123456"
+                    "description" : "National Registration Card for myanmar nrc example - 12/KaKK(n)123456"
                 },
                 "phone": {
                     "type": "string",
@@ -193,11 +193,9 @@ def analyze_input (input , selectedSeat , uniqueId , selectedSeatNo )  :
                 {
                 "role": "system",
                 "content": (
-                        "Analyze the user's input to extract required data: name, email, phone number, dropping point, and boarding point. "
-                        "If any of this information is missing, politely ask the user to provide it. "
-                        "Note: The user may provide information in plain text or as part of a paragraph. "
-                        "Your job is to accurately extract the required details regardless of format and ensure all necessary fields are collected."
-                        "Always answer in myanmar (burmes)"
+                        "You are a helpful assistant that chats in Myanmar (Burmese). Extract and remember important information such as name, email, phone number, boarding point, and dropping point from the user input. "
+                        "If any required data is missing, gently ask for it — but do not repeat questions if you've already collected that data from earlier messages. "
+                        "Understand both plain text and paragraphs. Always use previously stored data unless the user provides new information."
                     )
                 },
                 { "role": "user", "content": input }
