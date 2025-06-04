@@ -224,7 +224,7 @@ def chat():
         input = perviousInput + "." + input
         response = ragChain.invoke({"input": input})
         context_docs = response["context"]
-        response['init_state'] = 2 if status else 1
+        
         if not context_docs:
             response['init_state'] = 1
         elif "❌ there is no route for that" in response['answer'].lower():
@@ -246,9 +246,11 @@ def chat():
             dropping_point = matching_doc.metadata.get('dropping_point', '')
             uniqueId = data if data else 0
             perviousInput = input
+            response['init_state'] = 2
         else:
             data = travel_date = boarding_point = dropping_point = uniqueId = ''
             perviousInput = ""
+            response['init_state'] = 1
         selectedSeatNo = ""
         selectedSeatId = ""
     if 'answer' in response:
