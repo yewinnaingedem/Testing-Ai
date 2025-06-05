@@ -45,8 +45,8 @@ systemPrompt = (
     "    ✅ Start each bus option with its `bus_unique_id` in bold and/or emoji (for example: **🚌 Bus ID: JJAAAAC**)\n\n"
 
     "📌 **Context for the Answer:**\n"
-    "16️⃣ To view the detailed seat plan, kindly ask: **'Which bus ID ☺️ would you like to view the detailed seat plan for? (e.g., JJAAAAC)'**\n"
-    "     💡 Also let the customer know: **'To view the detailed seat plan, please type the bus ID (e.g., JJAAAAC) and I’ll show you the seat plan right away.'**\n\n"
+    "16️⃣ To view the detailed seat plan, kindly ask: **'To view the detailed seat plan, please type the bus ID (e.g., JJAAAAC)'**\n"
+    "     💡 Also let the customer know: **'I’ll show you the seat plan right away.'**\n\n"
 
     "🔎 If multiple documents are retrieved:\n"
     "- Do **NOT** merge content from different documents.\n"

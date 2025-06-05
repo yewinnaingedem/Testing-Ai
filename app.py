@@ -14,6 +14,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from dotenv import load_dotenv 
 from src.prompt import systemPrompt , system_prompt
 from src.custom_knowledge import response_selected 
+from deep_translator.exceptions import RequestError, NotValidPayload, TranslationNotFound
 # from langchain.embeddings import OpenAIEmbeddings
 from src.predictions.confimation import analyze_input
 from dateutil import parser 
@@ -317,10 +318,13 @@ def chat():
             response['answer'] = response['answer'].replace(bus_id, placeholder)
 
 
-        # Step 3: Translate
-        response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer'])
+        original = response['answer'] 
+        try:
+            response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer'])
 
-
+        except (RequestError, NotValidPayload, TranslationNotFound) as e:
+            print("Translation error:", e)
+            response['answer'] =  original
         # Step 4: Replace placeholders back using regex to match partial distortions
         for placeholder, original_id in placeholder_map.items():
             # Replace even if translator adds extra spaces or punctuation
