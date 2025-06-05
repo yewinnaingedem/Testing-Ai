@@ -266,6 +266,7 @@ def chat():
             perviousInput = ""
         response['uniqueId'] = uniqueId 
     else : 
+        data = input
         response = openai.chat.completions.create( 
             model="gpt-4", 
             messages=[
@@ -319,7 +320,6 @@ def chat():
         # Step 3: Translate
         response['answer'] = GoogleTranslator(source='auto', target='my').translate(response['answer'])
 
-        print("After translation:\n", response['answer'])
 
         # Step 4: Replace placeholders back using regex to match partial distortions
         for placeholder, original_id in placeholder_map.items():
@@ -328,7 +328,7 @@ def chat():
             response['answer'] = pattern.sub(original_id, response['answer'])
 
         response['info'] = ""
-
+        perviousInput = data
         
         if matching_doc:
             data = matching_doc.metadata.get('unique_id', '')
@@ -336,11 +336,10 @@ def chat():
             boarding_point = matching_doc.metadata.get('boarding_point', '')
             dropping_point = matching_doc.metadata.get('dropping_point', '')
             uniqueId = data if data else 0
-            perviousInput = input
+            
             response['init_state'] = 1
         else:
             data = travel_date = boarding_point = dropping_point = uniqueId = ''
-            perviousInput = input
             response['init_state'] = 1
         selectedSeatNo = ""
         selectedSeatId = ""
