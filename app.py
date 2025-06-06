@@ -189,9 +189,14 @@ def chat():
             data = rawData.json() 
             response['answer'] = data['seat_plan']
             response['init_state'] = 3 
-            response['info'] = """You can hold a seat for only **15 minutes**. The seat plan is updated **live every minute** to reflect real-time availability.
-            if you want to selected the seat just type the seat number you can only selected one seat at this movement
-            """
+            response['info'] = """
+                You can hold a seat for only **15 minutes**. The seat plan is updated **live every minute** to reflect real-time availability.
+                Currently, you can select only **one seat** at a time.
+                Please note, for now, I assume you are a male passenger.
+                This feature is still in development, so some functionality may be limited.
+                If you want to select a seat, just type the seat number.
+                """
+
             response['info'] = GoogleTranslator(source='auto', target='my').translate(response['info'])
         else: 
             response = openai.chat.completions.create( 
